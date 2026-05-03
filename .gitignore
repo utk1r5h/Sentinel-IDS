@@ -1,0 +1,21 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environments
+.venv/
+env/
+venv/
+ENV/
+
+# Data Files (Too large for GitHub)
+data/raw/
+data/processed/master_dataset.csv
+
+# Models (Keep these so your friend can run it immediately)
+# models/ 
+
+# OS generated files
+.DS_Store
+Thumbs.db
