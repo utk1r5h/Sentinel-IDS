@@ -22,19 +22,14 @@ class DecisionTree:
         best_gini = self._gini(y)
         best_idx, best_thr = None, None
 
-        # --- KEY FIX 1: Random Feature Subsampling ---
-        # This is what makes a Random Forest actually "random".
-        # Without this, all trees see the same features and become correlated.
+    
         if self.max_features is not None and self.max_features < n:
             feature_indices = np.random.choice(n, self.max_features, replace=False)
         else:
             feature_indices = np.arange(n)
 
         for idx in feature_indices:
-            # --- KEY FIX 2: Percentile-based threshold candidates ---
-            # Instead of trying every unique value (extremely slow on large data),
-            # we evaluate 20 evenly-spaced percentile thresholds.
-            # This gives ~95% of the accuracy at 50x the speed.
+
             col_vals = X[:, idx]
             thresholds = np.percentile(col_vals, np.linspace(5, 95, 20))
             thresholds = np.unique(thresholds)  # Remove duplicates
@@ -46,7 +41,6 @@ class DecisionTree:
                 if left_mask.sum() == 0 or right_mask.sum() == 0:
                     continue
 
-                # Weighted Gini impurity
                 g = (left_mask.sum() * self._gini(y[left_mask]) +
                      right_mask.sum() * self._gini(y[right_mask])) / m
 
@@ -58,11 +52,9 @@ class DecisionTree:
         return best_idx, best_thr
 
     def fit(self, X, y, depth=0):
-        # Leaf node: return the majority class
         classes, counts = np.unique(y, return_counts=True)
         predicted_class = classes[np.argmax(counts)]
 
-        # Stop conditions: max depth reached or pure node
         if depth >= self.max_depth or len(classes) == 1:
             return predicted_class
 
@@ -87,26 +79,16 @@ class DecisionTree:
                 return self.predict_row(row, node['left'])
             else:
                 return self.predict_row(row, node['right'])
-        return node  # Leaf node — return class integer
+        return node  #
 
 
 class RandomForestFromScratch:
-    """
-    A Random Forest classifier built entirely from scratch using NumPy.
 
-    Key properties that make this a true Random Forest:
-      1. Bootstrap sampling (Bagging) — each tree trains on a random subset with replacement
-      2. Random feature subsampling — each split only considers sqrt(n_features) candidates
-      3. Majority voting — final prediction is the most common class across all trees
-
-    For the full IDS dataset, use sklearn's RandomForestClassifier (see model_training.py).
-    This scratch implementation is used on the demo dataset to demonstrate the algorithm.
-    """
 
     def __init__(self, n_trees=20, max_depth=15, max_features='sqrt'):
         self.n_trees = n_trees
         self.max_depth = max_depth
-        self.max_features = max_features  # 'sqrt', 'log2', or an integer
+        self.max_features = max_features  
         self.trees = []
         self.classes_ = None
 
@@ -120,18 +102,14 @@ class RandomForestFromScratch:
         return n_features
 
     def fit(self, X, y):
-        """
-        Train the forest.
-        X: numpy array of shape (n_samples, n_features)
-        y: numpy array of shape (n_samples,) — integer-encoded class labels
-        """
+    
         self.classes_ = np.unique(y)
         n_samples, n_features = X.shape
         mf = self._resolve_max_features(n_features)
 
         self.trees = []
         for i in range(self.n_trees):
-            # Bootstrap: sample WITH replacement
+            
             indices = np.random.choice(n_samples, n_samples, replace=True)
             X_boot, y_boot = X[indices], y[indices]
 
@@ -143,25 +121,17 @@ class RandomForestFromScratch:
                 print(f"  Trees trained: {i + 1}/{self.n_trees}")
 
     def predict(self, X):
-        """
-        Majority vote prediction.
-        Returns: list of predicted class integers
-        """
-        # Shape: (n_trees, n_samples)
+
+      
         tree_preds = np.array([
             [tree.predict_row(row, tree.tree) for row in X]
             for tree in self.trees
         ])
-        # Majority vote for each sample
+        
         return [Counter(tree_preds[:, i]).most_common(1)[0][0] for i in range(X.shape[0])]
 
     def predict_proba(self, X):
-        """
-        Returns vote distribution across all classes for each sample.
-        This is used in the Manual Packet Inspector to show confidence.
-
-        Returns: list of dicts — {class_int: vote_count} for each sample
-        """
+ 
         tree_preds = np.array([
             [tree.predict_row(row, tree.tree) for row in X]
             for tree in self.trees
@@ -170,7 +140,6 @@ class RandomForestFromScratch:
         result = []
         for i in range(X.shape[0]):
             votes = Counter(tree_preds[:, i])
-            # Normalise to fractions
             total = sum(votes.values())
             proba = {c: votes.get(c, 0) / total for c in self.classes_}
             result.append(proba)

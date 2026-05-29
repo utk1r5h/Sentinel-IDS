@@ -1,18 +1,4 @@
-"""
-create_demo_csv.py
 
-Creates a small, demo-ready CSV for the Streamlit live simulation.
-
-Why this exists:
-  - The raw CICIDS 2017 files are hundreds of MB — cannot be uploaded in a browser
-  - The master_dataset.csv is also large (~700k rows)
-  - This script creates a ~1000 row file with every attack class represented
-  - File is small enough to upload via Streamlit sidebar instantly
-
-Output: data/processed/demo_traffic.csv
-Run this AFTER model_training.py has been run at least once
-(so global_feature_list.pkl exists).
-"""
 
 import pandas as pd
 import numpy as np
@@ -28,7 +14,6 @@ def create_demo_csv(
 ):
     print("--- Creating Demo CSV ---")
 
-    # Load the feature list saved during training
     feature_list_path = "models/global_feature_list.pkl"
     if not os.path.exists(feature_list_path):
         print("ERROR: global_feature_list.pkl not found.")
@@ -38,18 +23,15 @@ def create_demo_csv(
     top_features = joblib.load(feature_list_path)
     print(f"Loaded {len(top_features)} selected features.")
 
-    # Load master dataset (only the columns we need + Label)
     cols_to_load = top_features + ['Label']
     print(f"Loading master dataset from {master_path}...")
     df = pd.read_csv(master_path, usecols=cols_to_load)
     df.columns = df.columns.str.strip()
     print(f"Master dataset loaded: {len(df)} rows, {len(df.columns)} columns")
 
-    # Drop rows with any NaN or Inf in feature columns
     df = df.replace([np.inf, -np.inf], np.nan)
     df = df.dropna(subset=top_features)
 
-    # Stratified sampling: rows_per_class rows from each attack type
     class_counts = df['Label'].value_counts()
     print(f"\nClasses in master dataset: {len(class_counts)}")
     for label, count in class_counts.items():

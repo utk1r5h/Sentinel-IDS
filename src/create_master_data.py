@@ -12,21 +12,16 @@ def merge_and_balance_data(input_folder, output_file):
         file_name = os.path.basename(file_path)
         print(f"Processing: {file_name}")
         
-        # Load the file
         df = pd.read_csv(file_path)
         
-        # Clean column names immediately
         df.columns = df.columns.str.strip()
         
-        # Separate Attacks from Benign
         attacks = df[df['Label'] != 'BENIGN']
         benign = df[df['Label'] == 'BENIGN']
         
-        # Downsample Benign: We take 50,000 samples OR the total available (whichever is smaller)
-        # This keeps the 'Normal' traffic from drowning out the 'Hacker' traffic
+  
         benign_sampled = benign.sample(n=min(len(benign), 50000), random_state=42)
         
-        # Combine the day's balanced data
         day_balanced = pd.concat([attacks, benign_sampled])
         combined_data.append(day_balanced)
         print(f"   Added {len(attacks)} attacks and {len(benign_sampled)} benign rows.")
@@ -34,7 +29,6 @@ def merge_and_balance_data(input_folder, output_file):
     # Final Merge
     master_df = pd.concat(combined_data, axis=0)
     
-    # Save to processed folder
     os.makedirs(os.path.dirname(output_file), exist_ok=True)
     master_df.to_csv(output_file, index=False)
     print(f"\nSUCCESS: Master dataset saved to {output_file}")

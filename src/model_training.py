@@ -12,9 +12,7 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from scratch_models import RandomForestFromScratch
 
 
-# ─────────────────────────────────────────────
-# PART A: Scratch RF — trained on demo dataset
-# ─────────────────────────────────────────────
+
 
 def train_scratch_model(X_train, X_test, y_train, y_test, features):
     print("\n--- Training FROM-SCRATCH Random Forest (Demo Dataset) ---")
@@ -35,7 +33,6 @@ def train_scratch_model(X_train, X_test, y_train, y_test, features):
     preds = scratch_rf.predict(X_test_sub)
     le = joblib.load('models/label_encoder.pkl')
     
-    # FIX: Filter labels to match classes present in the test set
     present_classes = np.unique(y_test_arr).astype(int)
     target_names = [le.classes_[i] for i in present_classes]
 
@@ -47,9 +44,7 @@ def train_scratch_model(X_train, X_test, y_train, y_test, features):
     return scratch_rf
 
 
-# ─────────────────────────────────────────────
-# PART B: Sklearn RF — full dataset + saves eval results
-# ─────────────────────────────────────────────
+
 
 def train_global_model(X_train, X_test, y_train, y_test, features):
     print(f"\n--- Training Global IDS Model (Full Dataset, sklearn) ---")
@@ -74,7 +69,6 @@ def train_global_model(X_train, X_test, y_train, y_test, features):
     y_pred = model.predict(X_test_sub)
     le = joblib.load('models/label_encoder.pkl')
 
-    # FIX: Identify which classes are actually in the test set to avoid mismatch
     present_classes = np.unique(y_test).astype(int)
     target_names = [le.classes_[i] for i in present_classes]
 
@@ -87,7 +81,6 @@ def train_global_model(X_train, X_test, y_train, y_test, features):
 
     cm = confusion_matrix(y_test, y_pred)
 
-    # Save everything the dashboard needs for Tab 3
     eval_results = {
         'report':           report_dict,
         'confusion_matrix': cm,
@@ -130,17 +123,14 @@ if __name__ == "__main__":
     from preprocessing import preprocess_data
     from feature_selection import get_top_features
 
-    # ── Step 1: Full dataset ─────────────────────────────────────────────────
     print("=" * 60)
     print("STEP 1: Full dataset training (sklearn RF)")
     print("=" * 60)
     raw_data = load_and_clean_data("data/processed/master_dataset.csv")
 
-    # Get scaled splits for training
     X_train_scaled, X_test_scaled, y_train, y_test = preprocess_data(raw_data)
     top_cols = get_top_features(X_train_scaled, y_train, top_n=15)
 
-    # Re-load raw (unscaled) data to get real-world medians for sliders
     raw_data_2 = load_and_clean_data("data/processed/master_dataset.csv")
     raw_data_2.columns = raw_data_2.columns.str.strip()
     raw_data_2 = raw_data_2.drop(columns=['Label'], errors='ignore')
@@ -149,7 +139,6 @@ if __name__ == "__main__":
 
     train_global_model(X_train_scaled, X_test_scaled, y_train, y_test, top_cols)
 
-    # ── Step 2: Demo dataset ─────────────────────────────────────────────────
     print("\n" + "=" * 60)
     print("STEP 2: Demo dataset training (Scratch RF)")
     print("=" * 60)
